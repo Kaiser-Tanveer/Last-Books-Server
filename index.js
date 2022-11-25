@@ -37,7 +37,22 @@ const run = async () => {
             res.send(products);
         })
 
+        // Posting orders to booking collection 
+        app.post('/bookings', async (req, res) => {
+            const order = req.body;
+            const result = await bookingsCollection.insertOne(order);
+            res.send(result);
+        })
 
+        // Getting orders data 
+        app.get('/bookings', async (req, res) => {
+            const email = req.query.email;
+            const query = { email: email }
+            const orders = await bookingsCollection.find(query).toArray();
+            res.send(orders);
+        })
+
+        // Posting users to store in BD
 
     }
     finally {
