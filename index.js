@@ -53,6 +53,11 @@ const run = async () => {
         })
 
         // Posting users to store in BD
+        app.post('/users', async (req, res) => {
+            const user = req.body;
+            const result = usersCollection.insertOne(user);
+            res.send(result);
+        })
 
     }
     finally {
