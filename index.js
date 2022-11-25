@@ -2,9 +2,9 @@ const express = require('express')
 const app = express();
 const cors = require('cors');
 require('dotenv').config();
+const jwt = require('jsonwebtoken');
 const port = process.env.PORT || 5000;
-const { MongoClient, ServerApiVersion, Collection, ObjectId } = require('mongodb');
-const { query } = require('express');
+const { MongoClient, ServerApiVersion, ObjectId } = require('mongodb');
 
 app.use(cors());
 app.use(express.json());
@@ -20,6 +20,7 @@ const run = async () => {
         const categoriesCollection = client.db('lastBooks').collection('categories');
         const bookingsCollection = client.db('lastBooks').collection('bookings');
         const usersCollection = client.db('lastBooks').collection('users');
+
 
         // getting data from categories categoriesCollection
         app.get('/categories', async (req, res) => {
@@ -52,10 +53,24 @@ const run = async () => {
             res.send(orders);
         })
 
-        // Posting users to store in BD
+        // Get jwt token 
+        app.get('/jwt', async (req, res) => {
+            const email = req.query.email;
+            const query = { email: email };
+            const user = await usersCollection.findOne(query);
+
+            if (user && user.email) {
+                const token = jwt.sign({ email }, process.env.TOKEN_SECRET, { expiresIn: '7d' });
+                return res.send({ accessToken: token })
+            }
+            console.log(user);
+            res.status(403).send({ accessToken: '' });
+        })
+
+        // Creating user in dB 
         app.post('/users', async (req, res) => {
             const user = req.body;
-            const result = usersCollection.insertOne(user);
+            const result = await usersCollection.insertOne(user);
             res.send(result);
         })
 
