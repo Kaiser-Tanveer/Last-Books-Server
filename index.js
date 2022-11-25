@@ -18,6 +18,8 @@ const run = async () => {
     try {
         // creating Books category Collection 
         const categoriesCollection = client.db('lastBooks').collection('categories');
+        const bookingsCollection = client.db('lastBooks').collection('bookings');
+        const usersCollection = client.db('lastBooks').collection('users');
 
         // getting data from categories categoriesCollection
         app.get('/categories', async (req, res) => {
@@ -34,6 +36,7 @@ const run = async () => {
             const products = await categoriesCollection.findOne(filter);
             res.send(products);
         })
+
 
 
     }
