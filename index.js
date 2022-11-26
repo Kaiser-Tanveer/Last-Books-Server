@@ -77,6 +77,21 @@ const run = async () => {
             res.send(orders);
         })
 
+        // Reporting orders 
+        app.put('/bookings/reported/:id', async (req, res) => {
+            const id = req.params.id;
+            console.log(id);
+            const filter = { _id: ObjectId(id) };
+            const options = { upsert: true };
+            const updatedDoc = {
+                $set: {
+                    reported: true
+                }
+            };
+            const result = await bookingsCollection.updateOne(filter, updatedDoc, options);
+            res.send(result);
+        })
+
         // Get jwt token 
         app.get('/jwt', async (req, res) => {
             const email = req.query.email;
@@ -104,6 +119,22 @@ const run = async () => {
             const users = await usersCollection.find(query).toArray();
             res.send(users);
         })
+
+        // Blue tick handling
+        app.put('/user/verified/:id', async (req, res) => {
+            const id = req.params.id;
+            console.log(id);
+            const filter = { _id: ObjectId(id) };
+            const options = { upsert: true };
+            const updatedDoc = {
+                $set: {
+                    verify: 'verified'
+                }
+            };
+            const result = await usersCollection.updateOne(filter, updatedDoc, options);
+            res.send(result);
+        })
+
 
     }
     finally {
