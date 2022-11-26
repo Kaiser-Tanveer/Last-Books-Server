@@ -80,7 +80,7 @@ const run = async () => {
         // Reporting orders 
         app.put('/bookings/reported/:id', async (req, res) => {
             const id = req.params.id;
-            console.log(id);
+            // console.log(id);
             const filter = { _id: ObjectId(id) };
             const options = { upsert: true };
             const updatedDoc = {
@@ -89,6 +89,14 @@ const run = async () => {
                 }
             };
             const result = await bookingsCollection.updateOne(filter, updatedDoc, options);
+            res.send(result);
+        })
+
+        // Deleting order 
+        app.delete('/bookings/reported/:id', async (req, res) => {
+            const id = req.params.id;
+            const filter = { _id: ObjectId(id) };
+            const result = await bookingsCollection.deleteOne(filter);
             res.send(result);
         })
 
@@ -128,14 +136,14 @@ const run = async () => {
         })
 
         // Blue tick handling
-        app.put('/user/verified/:id', async (req, res) => {
+        app.put('/users/verified/:id', async (req, res) => {
             const id = req.params.id;
             console.log(id);
             const filter = { _id: ObjectId(id) };
             const options = { upsert: true };
             const updatedDoc = {
                 $set: {
-                    verify: 'verified'
+                    verify: true
                 }
             };
             const result = await usersCollection.updateOne(filter, updatedDoc, options);
