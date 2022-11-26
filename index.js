@@ -92,6 +92,13 @@ const run = async () => {
             res.send(result);
         })
 
+        // Getting All Reported items 
+        app.get('/bookings/reported', async (req, res) => {
+            const filter = { reported: true };
+            const results = await bookingsCollection.find(filter).toArray();
+            res.send(results);
+        })
+
         // Get jwt token 
         app.get('/jwt', async (req, res) => {
             const email = req.query.email;
