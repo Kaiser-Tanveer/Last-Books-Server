@@ -14,6 +14,24 @@ const uri = `mongodb+srv://${process.env.DB_USER}:${process.env.DB_PASS}@cluster
 // console.log(uri);
 const client = new MongoClient(uri, { useNewUrlParser: true, useUnifiedTopology: true, serverApi: ServerApiVersion.v1 });
 
+
+// middleware function for jwt verify 
+const verifyJWT = (req, res, next) => {
+    const authHeader = req.headers.authorization;
+    if (!authHeader) {
+        return res.status(401).send({ message: 'unauthorized access' })
+    }
+    const token = authHeader.split(' ')[1];
+    jwt.verify(token, process.env.TOKEN_SECRET, function (error, decoded) {
+        if (error) {
+            return res.status(403).send({ message: 'Forbidden' });
+        }
+        req.decoded = decoded;
+        next();
+    })
+}
+
+
 const run = async () => {
     try {
         // creating Books category Collection 
@@ -46,9 +64,15 @@ const run = async () => {
         })
 
         // Getting orders data 
-        app.get('/bookings', async (req, res) => {
+        app.get('/bookings', verifyJWT, async (req, res) => {
             const email = req.query.email;
-            const query = { email: email }
+            const decodedEmail = req.decoded.email;
+
+            if (email !== decodedEmail) {
+                return res.status(403).status({ message: 'Forbidden Access' });
+            };
+
+            const query = { email: email };
             const orders = await bookingsCollection.find(query).toArray();
             res.send(orders);
         })
@@ -72,6 +96,13 @@ const run = async () => {
             const user = req.body;
             const result = await usersCollection.insertOne(user);
             res.send(result);
+        })
+
+        // Getting users for admin 
+        app.get('/users', async (req, res) => {
+            const query = {};
+            const users = await usersCollection.find(query).toArray();
+            res.send(users);
         })
 
     }
