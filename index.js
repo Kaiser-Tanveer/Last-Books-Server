@@ -36,6 +36,7 @@ const run = async () => {
     try {
         // creating Books category Collection 
         const categoriesCollection = client.db('lastBooks').collection('categories');
+        const productsCollection = client.db('lastBooks').collection('products');
         const bookingsCollection = client.db('lastBooks').collection('bookings');
         const usersCollection = client.db('lastBooks').collection('users');
 
@@ -47,14 +48,24 @@ const run = async () => {
             res.send(categories);
         })
 
-        // getting data by id 
-        app.get('/categories/:id', async (req, res) => {
-            const id = req.params.id;
-            console.log(id);
-            const filter = { _id: ObjectId(id) }
-            const products = await categoriesCollection.findOne(filter);
+        // Loading Products from productsCollection
+        app.get('/products/:titleName', async (req, res) => {
+            const title = req.params.titleName;
+            // console.log(title);
+            const filter = { titleName: title };
+            const products = await productsCollection.find(filter).toArray();
             res.send(products);
         })
+
+        // Adding new products 
+        app.post('/products', async (req, res) => {
+            const product = req.body;
+            // console.log(product);
+            const result = await productsCollection.insertOne(product);
+            res.send(result);
+        })
+
+
 
         // Posting orders to booking collection 
         app.post('/bookings', async (req, res) => {
@@ -62,6 +73,7 @@ const run = async () => {
             const result = await bookingsCollection.insertOne(order);
             res.send(result);
         })
+
 
         // Getting orders data 
         app.get('/bookings', verifyJWT, async (req, res) => {
