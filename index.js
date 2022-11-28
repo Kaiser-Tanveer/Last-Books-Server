@@ -5,6 +5,7 @@ require('dotenv').config();
 const jwt = require('jsonwebtoken');
 const port = process.env.PORT || 5000;
 const { MongoClient, ServerApiVersion, ObjectId } = require('mongodb');
+const stripe = require("stripe")(process.env.STRIPE_SEC);
 
 app.use(cors());
 app.use(express.json());
@@ -40,7 +41,7 @@ const run = async () => {
         const productsCollection = client.db('lastBooks').collection('products');
         const bookingsCollection = client.db('lastBooks').collection('bookings');
         const usersCollection = client.db('lastBooks').collection('users');
-
+        const paymentsCollection = client.db('doctorsPortal').collection('payments');
 
 
         // Verify Admin Middleware 
@@ -59,7 +60,48 @@ const run = async () => {
 
 
 
-        // Verify Admin Middleware 
+        // Payment Method 
+        app.post('/create-payment-intent', async (req, res) => {
+            const booking = req.body;
+            const price = booking.oldPrice;
+            console.log(typeof price, price);
+            if (price) {
+                const amount = price * 100;
+                console.log('Stripe==', stripe);
+                const paymentIntent = await stripe.paymentIntents.create({
+                    amount: amount,
+                    currency: 'bdt',
+                    "payment_method_types": [
+                        "card"
+                    ],
+                })
+                console.log('paymentIntent ==', paymentIntent.client_secret);
+                res.send({
+                    clientSecret: paymentIntent.client_secret,
+                });
+            }
+        })
+
+        // Inserting payment data in DB 
+        app.post('/payments', async (req, res) => {
+            const payment = req.body;
+            const result = await paymentsCollection.insertOne(payment);
+            const id = payment.bookingId;
+            const filter = { _id: ObjectId(id) };
+            const updatedDoc = {
+                $set: {
+                    paid: true,
+                    trxId: payment.trxId
+                }
+            }
+            const updatedResult = await bookingsCollection.updateOne(filter, updatedDoc);
+            res.send(result);
+        })
+
+
+
+
+        // Verify Seller Middleware 
         const verifySeller = async (req, res, next) => {
             const decodedEmail = req.decoded.email;
             // console.log(decodedEmail);
@@ -81,12 +123,22 @@ const run = async () => {
             res.send({ isAdmin: user?.role === 'admin' });
         })
 
+
         // Finding Sellers 
         app.get('/users/seller/:email', async (req, res) => {
             const email = req.params.email;
             const query = { email };
             const user = await usersCollection.findOne(query);
-            res.send({ isAdmin: user?.role === 'seller' });
+            res.send({ isSeller: user?.role === 'seller' });
+        })
+
+
+        // Finding Verified 
+        app.get('/users/verify/:email', async (req, res) => {
+            const email = req.params.email;
+            const query = { email };
+            const user = await usersCollection.findOne(query);
+            res.send({ isVerified: user?.verify === true });
         })
 
         // getting data from categories categoriesCollection
@@ -169,6 +221,14 @@ const run = async () => {
         app.get('/bookings/reported', async (req, res) => {
             const filter = { reported: true };
             const results = await bookingsCollection.find(filter).toArray();
+            res.send(results);
+        })
+
+        // Getting All Reported items 
+        app.get('/bookings/:id', async (req, res) => {
+            const id = req.params.id;
+            const filter = { _id: ObjectId(id) };
+            const results = await bookingsCollection.findOne(filter);
             res.send(results);
         })
 
