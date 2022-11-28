@@ -15,6 +15,7 @@ const uri = `mongodb+srv://${process.env.DB_USER}:${process.env.DB_PASS}@cluster
 const client = new MongoClient(uri, { useNewUrlParser: true, useUnifiedTopology: true, serverApi: ServerApiVersion.v1 });
 
 
+
 // middleware function for jwt verify 
 const verifyJWT = (req, res, next) => {
     const authHeader = req.headers.authorization;
@@ -41,6 +42,38 @@ const run = async () => {
         const usersCollection = client.db('lastBooks').collection('users');
 
 
+
+        // Verify Admin Middleware 
+        const verifyAdmin = async (req, res, next) => {
+            const decodedEmail = req.decoded.email;
+            // console.log(decodedEmail);
+            const query = { email: decodedEmail };
+            const user = await usersCollection.findOne(query);
+
+            if (user?.role !== 'admin') {
+                return res.status(403).send({ message: 'Forbidden Access' });
+            };
+
+            next();
+        };
+
+
+
+        // Verify Admin Middleware 
+        const verifySeller = async (req, res, next) => {
+            const decodedEmail = req.decoded.email;
+            // console.log(decodedEmail);
+            const query = { email: decodedEmail };
+            const user = await usersCollection.findOne(query);
+
+            if (user?.role !== 'seller') {
+                return res.status(403).send({ message: 'Forbidden Access' });
+            };
+
+            next();
+        };
+
+
         // getting data from categories categoriesCollection
         app.get('/categories', async (req, res) => {
             const query = {};
@@ -65,7 +98,13 @@ const run = async () => {
             res.send(result);
         })
 
-
+        app.get('/myProducts', async (req, res) => {
+            const email = req.query.email;
+            // console.log(email);
+            const filter = { email: email };
+            const products = await productsCollection.find(filter).toArray();
+            res.send(products);
+        })
 
         // Posting orders to booking collection 
         app.post('/bookings', async (req, res) => {
@@ -76,13 +115,13 @@ const run = async () => {
 
 
         // Getting orders data 
-        app.get('/bookings', verifyJWT, async (req, res) => {
+        app.get('/bookings', async (req, res) => {
             const email = req.query.email;
-            const decodedEmail = req.decoded.email;
+            // const decodedEmail = req.decoded.email;
 
-            if (email !== decodedEmail) {
-                return res.status(403).status({ message: 'Forbidden Access' });
-            };
+            // if (email !== decodedEmail) {
+            //     return res.status(403).status({ message: 'Forbidden Access' });
+            // };
 
             const query = { email: email };
             const orders = await bookingsCollection.find(query).toArray();
@@ -107,6 +146,7 @@ const run = async () => {
         // Deleting order 
         app.delete('/bookings/reported/:id', async (req, res) => {
             const id = req.params.id;
+            console.log(id);
             const filter = { _id: ObjectId(id) };
             const result = await bookingsCollection.deleteOne(filter);
             res.send(result);
@@ -129,7 +169,7 @@ const run = async () => {
                 const token = jwt.sign({ email }, process.env.TOKEN_SECRET, { expiresIn: '7d' });
                 return res.send({ accessToken: token })
             }
-            console.log(user);
+            // console.log(user);
             res.status(403).send({ accessToken: '' });
         })
 
@@ -150,7 +190,7 @@ const run = async () => {
         // Blue tick handling
         app.put('/users/verified/:id', async (req, res) => {
             const id = req.params.id;
-            console.log(id);
+            // console.log(id);
             const filter = { _id: ObjectId(id) };
             const options = { upsert: true };
             const updatedDoc = {
@@ -165,6 +205,7 @@ const run = async () => {
         // Deleting user 
         app.delete('/users/:id', async (req, res) => {
             const id = req.params.id;
+            console.log(id);
             const filter = { _id: ObjectId(id) };
             const result = await usersCollection.deleteOne(filter);
             res.send(result);
