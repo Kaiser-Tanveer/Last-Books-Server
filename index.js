@@ -253,15 +253,22 @@ const run = async () => {
             res.send(result);
         })
 
-        // Getting users for admin 
-        app.get('/users', async (req, res) => {
-            const query = {};
+        // Getting Sellers for admin 
+        app.get('/users/sellers', async (req, res) => {
+            const query = { role: 'seller' };
+            const users = await usersCollection.find(query).toArray();
+            res.send(users);
+        })
+
+        // Getting Buyers for admin 
+        app.get('/users/buyers', async (req, res) => {
+            const query = { role: 'buyer' };
             const users = await usersCollection.find(query).toArray();
             res.send(users);
         })
 
         // Blue tick handling
-        app.put('/users/verified/:id', async (req, res) => {
+        app.put('/users/sellers/verified/:id', async (req, res) => {
             const id = req.params.id;
             // console.log(id);
             const filter = { _id: ObjectId(id) };
@@ -275,8 +282,17 @@ const run = async () => {
             res.send(result);
         })
 
-        // Deleting user 
-        app.delete('/users/:id', async (req, res) => {
+        // Deleting Sellers 
+        app.delete('/users/sellers/:id', async (req, res) => {
+            const id = req.params.id;
+            console.log(id);
+            const filter = { _id: ObjectId(id) };
+            const result = await usersCollection.deleteOne(filter);
+            res.send(result);
+        })
+
+        // Deleting Buyers 
+        app.delete('/users/buyers/:id', async (req, res) => {
             const id = req.params.id;
             console.log(id);
             const filter = { _id: ObjectId(id) };
