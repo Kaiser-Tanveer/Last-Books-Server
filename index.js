@@ -41,7 +41,8 @@ const run = async () => {
         const productsCollection = client.db('lastBooks').collection('products');
         const bookingsCollection = client.db('lastBooks').collection('bookings');
         const usersCollection = client.db('lastBooks').collection('users');
-        const paymentsCollection = client.db('doctorsPortal').collection('payments');
+        const reviewsCollection = client.db('lastBooks').collection('reviews');
+        const paymentsCollection = client.db('lastBooks').collection('payments');
 
 
         // Verify Admin Middleware 
@@ -300,6 +301,21 @@ const run = async () => {
             res.send(result);
         })
 
+
+        // Storing reviews 
+        app.post('/reviews', async (req, res) => {
+            const review = req.body;
+            console.log(review);
+            const result = await reviewsCollection.insertOne(review);
+            res.send(result);
+        })
+
+        // Getting reviews 
+        app.get('/reviews', async (req, res) => {
+            const query = {};
+            const reviews = await reviewsCollection.find(query).toArray();
+            res.send(reviews);
+        })
 
     }
     finally {
