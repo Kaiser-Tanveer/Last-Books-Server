@@ -60,7 +60,6 @@ const run = async () => {
         };
 
 
-
         // Payment Method 
         app.post('/create-payment-intent', async (req, res) => {
             const booking = req.body;
@@ -98,7 +97,6 @@ const run = async () => {
             const updatedResult = await bookingsCollection.updateOne(filter, updatedDoc);
             res.send(result);
         })
-
 
 
 
@@ -307,6 +305,7 @@ const run = async () => {
             const review = req.body;
             console.log(review);
             const result = await reviewsCollection.insertOne(review);
+            console.log(result);
             res.send(result);
         })
 
@@ -316,7 +315,6 @@ const run = async () => {
             const reviews = await reviewsCollection.find(query).toArray();
             res.send(reviews);
         })
-
     }
     finally {
 
