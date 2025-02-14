@@ -33,7 +33,6 @@ const verifyJWT = (req, res, next) => {
     })
 }
 
-
 const run = async () => {
     try {
         // creating Books category Collection 
