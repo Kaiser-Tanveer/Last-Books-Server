@@ -192,21 +192,19 @@ const run = async () => {
         });
 
         // Updating payment status 
-        app.patch('/bookings/:id', async (req, res) => {
-            const {id} = req.params;
-            const {paid} = req.body;
+        app.get('/bookings/:id', async (req, res) => {
+            const { id } = req.params;
+            try {
+                const order = await bookingsCollection.findOne({ _id: new ObjectId(id) });
+                if (!order) {
+                    return res.status(404).send({ message: "Order not found" });
+                }
+                res.send(order);
+            } catch (error) {
+                res.status(500).send({ message: "Invalid ID format" });
+               }
+        });
 
-            const result = await bookingsCollection.updateOne(
-                {_id: new ObjectId(id)},
-                {$set: {paid: paid}}
-            )
-
-            if(result.modifiedCount === 0){
-                return res.status(404).send({message: 'Order not found or not updated!'})
-            }
-            
-            res.send({message: "Order Updated Successfully!"});
-        })
 
         // Reporting orders 
         app.put('/bookings/reported/:id', async (req, res) => {
