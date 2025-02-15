@@ -191,6 +191,23 @@ const run = async () => {
             res.send(orders);
         });
 
+        // Updating payment status 
+        app.patch('/bookings/:id', async (req, res) => {
+            const {id} = req.params;
+            const {paid} = req.body;
+
+            const result = await bookingsCollection.updateOne(
+                {_id: new ObjectId(id)},
+                {$set: {paid: paid}}
+            )
+
+            if(result.modifiedCount === 0){
+                return res.status(404).send({message: 'Order not found or not updated!'})
+            }
+            
+            res.send({message: "Order Updated Successfully!"});
+        })
+
         // Reporting orders 
         app.put('/bookings/reported/:id', async (req, res) => {
             const id = req.params.id;
