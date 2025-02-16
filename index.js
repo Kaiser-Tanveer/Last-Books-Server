@@ -12,7 +12,7 @@ app.use(express.json());
 
 
 const uri = `mongodb+srv://${process.env.DB_USER}:${process.env.DB_PASS}@cluster0.tl2ww1y.mongodb.net/?retryWrites=true&w=majority`;
-// console.log(uri);
+
 const client = new MongoClient(uri, { useNewUrlParser: true, useUnifiedTopology: true, serverApi: ServerApiVersion.v1 });
 
 
@@ -47,7 +47,7 @@ const run = async () => {
         // Verify Admin Middleware 
         const verifyAdmin = async (req, res, next) => {
             const decodedEmail = req.decoded.email;
-            // console.log(decodedEmail);
+            console.log(decodedEmail);
             const query = { email: decodedEmail };
             const user = await usersCollection.findOne(query);
 
@@ -63,7 +63,7 @@ const run = async () => {
         app.post('/create-payment-intent', async (req, res) => {
             const booking = req.body;
             const price = booking.oldPrice;
-            console.log(typeof price, price);
+            
             if (price) {
                 const amount = price * 100;
                 console.log('Stripe==', stripe);
@@ -74,7 +74,6 @@ const run = async () => {
                         "card"
                     ],
                 })
-                console.log('paymentIntent ==', paymentIntent.client_secret);
                 res.send({
                     clientSecret: paymentIntent.client_secret,
                 });
@@ -178,40 +177,42 @@ const run = async () => {
             res.send(result);
         })
 
-
         // Getting orders data 
-        app.get('/bookings', async (req, res) => {
+        app.get('/bookings', verifyJWT, async (req, res) => {
             const email = req.query.email;
-            // const decodedEmail = req.decoded.email;
-            // if (email !== decodedEmail) {
-            //     return res.status(403).status({ message: 'Forbidden Access' });
-            // };
-            const query = { email: email };
+            const decodedEmail = req.decoded.email;
+        
+            if (email !== decodedEmail) {
+                return res.status(403).send({ message: 'Forbidden Access' });
+            }
+        
+            const query = { email };
             const orders = await bookingsCollection.find(query).toArray();
             res.send(orders);
         });
+        
+
 
         // Updating payment status 
-        app.patch('/bookings/:id', async (req, res) => {
+        app.patch('/bookings/:id', verifyJWT, verifyAdmin, async (req, res) => {
             const { id } = req.params;
             const { paid } = req.body;
-
+        
             try {
                 const result = await bookingsCollection.updateOne(
                     { _id: new ObjectId(id) },
                     { $set: { paid: paid } }
                 );
-
+        
                 if (result.modifiedCount === 0) {
                     return res.status(404).send({ message: "Order not found or already updated" });
                 }
-
+        
                 res.send({ message: "Order updated successfully" });
             } catch (error) {
                 res.status(500).send({ message: "Invalid ID format or server error" });
             }
         });
-
 
 
         // Reporting orders 
